@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/stable/ref/settings/
 """
 
 import os
-
+import environ
 import dj_database_url
 
 # Build paths inside the project like this: os.path.join(PROJECT_DIR, ...)
@@ -34,10 +34,24 @@ ALLOWED_HOSTS = []
 #     '127.0.0.1',
 # ]
 
+# 1. Initialize
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+
+# 2. Read .env file
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# 3. Use vars
+DEBUG = env("DEBUG")
+SECRET_KEY = env("SECRET_KEY", default="fallback-secret-key")
+
 # Application definition
 
 INSTALLED_APPS = [
     "bakerydemo.base",
+    "bakerydemo.chatbot",
     "bakerydemo.blog",
     "bakerydemo.breads",
     "bakerydemo.locations",
@@ -124,11 +138,16 @@ if "DATABASE_URL" in os.environ:
     DATABASES = {"default": dj_database_url.config(conn_max_age=500)}
 else:
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": os.path.join(BASE_DIR, "bakerydemodb"),
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME':     env('RDS_DB_NAME'),
+            'USER':     env('RDS_USERNAME'),
+            'PASSWORD': env('RDS_PASSWORD'),
+            'HOST':     env('RDS_HOSTNAME'),
+            'PORT':     env('RDS_PORT', default='5432'),
         }
     }
+
 
 
 # Password validation

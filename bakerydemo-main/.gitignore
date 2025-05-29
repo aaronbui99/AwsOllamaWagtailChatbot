@@ -14,8 +14,8 @@ common/CACHE
 bakerydemo/settings/local.py
 bakerydemodb
 node_modules
-venv
-.venv
+myvenv
+.myvenv
 __pycache__
 .vagrant/
 /.vagrant/

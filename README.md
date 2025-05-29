@@ -122,6 +122,7 @@ ss -tulnp | grep 11434
 6. Pull your model (once Ollama is running. If you want other models, see the list here: https://ollama.com/search) 
 
 ollama pull deepseek-r1:1.5b
+
 7. Test the API locally on EC2
 
 curl -X POST http://localhost:11434/api/generate \
@@ -141,6 +142,16 @@ One way is to go to EC2 console -> Select your instance -> Description tab -> Pu
 Then go to file chatbot/views.py and change the line 10 to your public ip
 OLLAMA_API_URL = "http://<EC2_PUBLIC_IP>:11434/api/generate"
 
+and in chatbot/views.py
+
+payload = {
+            "model": "deepseek-r1:1.5b",
+            "prompt": user_prompt,
+            "stream": False
+        }
+
+Change the AI Model to whatever you have downloaded. For example if you download llama2, change it to llama2
+
 # Run Django Server
 
   python manage.py makemigrations
@@ -152,3 +163,45 @@ OLLAMA_API_URL = "http://<EC2_PUBLIC_IP>:11434/api/generate"
   python manage.py runserver
   
 Go to link: localhost:8000/chatbot/
+
+# Create AWS RDS
+
+Go to link: https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#
+
+Click on Databases -> Create database
+
+![alt text](image-18.png)
+
+For this demo, i will be using PostgreSQL database engine with engine version PostgreSQL 17.4-R1 and Templates Free Tier.
+
+![alt text](image-19.png)
+
+![alt text](image-20.png)
+
+![alt text](image-21.png)
+
+![alt text](image-22.png)
+
+For Connectivity, connect with AWS EC2 that you created early on and running
+![alt text](image-23.png)
+
+For VPC security group, select the one you created earlier
+
+![alt text](image-24.png)
+
+For database authentication, i will use Password authentication. Feel free to use others.
+
+![alt text](image-25.png)
+
+For Monitoring, i will use 7 Days since it's free tier.
+
+![alt text](image-26.png)
+
+![alt text](image-27.png)
+
+After clicking creating, wait until it's ready and this will be shown
+
+![alt text](image-28.png)
+
+# Deploying to Elastic Beanstalk
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-django.html
