@@ -164,6 +164,68 @@ Change the AI Model to whatever you have downloaded. For example if you download
   
 Go to link: localhost:8000/chatbot/
 
+# Create IAM Role
+
+Find IAM and click on Create User
+
+![image](https://github.com/user-attachments/assets/ff49415d-496e-41b3-aac1-447c0f6fa342)
+
+Click on Next 
+
+For Permission Policies, we will create the rds all permission and allow ec2 and rds pgacloud 
+
+![image](https://github.com/user-attachments/assets/900943a5-b035-4697-bf2a-6ee65911fde3)
+
+Click on attach policies directly and create policies with content as below:
+
+For AllowEC2andRDSforpgacloud
+
+Insert this in json 
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ec2:CreateSecurityGroup",
+				"ec2:AuthorizeSecurityGroupIngress",
+				"ec2:DeleteSecurityGroup",
+				"ec2:DescribeSecurityGroups"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"rds:CreateDBInstance",
+				"rds:DescribeDBInstances",
+				"rds:DescribeDBSubnetGroups",
+				"rds:DescribeDBEngineVersions",
+				"rds:CreateDBSubnetGroup",
+				"rds:ModifyDBInstance",
+				"rds:DeleteDBInstance"
+			],
+			"Resource": "*"
+		}
+	]
+}
+
+For rds-all-permissions insert json
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "VisualEditor0",
+			"Effect": "Allow",
+			"Action": "rds:*",
+			"Resource": "*"
+		}
+	]
+}
+
+
 # Create AWS RDS
 
 Go to link: https://ap-southeast-2.console.aws.amazon.com/rds/home?region=ap-southeast-2#
@@ -202,6 +264,76 @@ For Monitoring, i will use 7 Days since it's free tier.
 After clicking creating, wait until it's ready and this will be shown
 
 ![alt text](image-28.png)
+
+Please noted that the AWS RDS is connected with AWS EC2 that previously we created. Which means you can check the connection using EC2 Bash (Click on Connect button in AWS EC2 for the instance we created earlier)
+
+When EC2 bash is opened:
+
+Insert this to install psql for ec2 bash ( For linux )
+
+sudo dnf search postgresql
+
+I choose version 15
+
+sudo dnf install -y postgresql15
+which psql
+psql --version
+
+Test connection to RDS instance in EC2 bash
+
+psql --host=<your-rds-endpoint>.ap-southeast-2.rds.amazonaws.com --port=5432 --username=postgresql --dbname=database-1
+
+If psql command does not work you can use these instead
+
+sudo dnf install -y nmap-ncat 
+nc -zv database-1.c10mgacs26tc.ap-southeast-2.rds.amazonaws.com 5432
+
+OR using SSL handshake with OPENSSL
+openssl s_client -connect database-1.c10mgacs26tc.ap-southeast-2.rds.amazonaws.com:5432
+
+If it connects succesfully, congrats. If it fails, it's the security group setting in your rds-ec2 for port 5432
+
+![image](https://github.com/user-attachments/assets/54fb3547-58a1-4770-b76e-b9989a17ade4)
+
+![image](https://github.com/user-attachments/assets/c29a4707-81c3-4735-ad00-062cd2d67ee1)
+
+![image](https://github.com/user-attachments/assets/83db9cfe-83b2-407d-b56f-941a7447ac12)
+
+![image](https://github.com/user-attachments/assets/45cb5454-ceed-43f8-b8dc-362d1d6f6d3c)
+
+![image](https://github.com/user-attachments/assets/a3cfb0a0-d5cd-4479-85d2-0c2dcccceaaf)
+
+![image](https://github.com/user-attachments/assets/3cd45d24-fb6f-4f59-b87a-bd4153b42bb1)
+
+![image](https://github.com/user-attachments/assets/828d0ae1-c376-4fee-a119-5eef92d632b9)
+
+
+Remember file pem we created earlier on? Time to use it in your command prompt
+
+Open your command prompt or powershell and insert 
+
+ssh -i "C:\Users\Admin\Downloads\ollamaawskey.pem" `
+  -L 5433:database-1.c10mgacs26tc.ap-southeast-2.rds.amazonaws.com:5432 `
+  ec2-user@ec2-54-252-237-194.ap-southeast-2.compute.amazonaws.com
+
+![image](https://github.com/user-attachments/assets/908ad42e-529f-4f80-bb33-ee57e2f36489)
+
+you can insert aws command above at here to check as well.
+
+Now for PGADMIN setup. you click on register -> Server
+
+![image](https://github.com/user-attachments/assets/e456e731-bb32-4c9d-95a5-f09005d9093e)
+
+![image](https://github.com/user-attachments/assets/058d8492-d2f0-414b-9619-9f5a518a053f)
+
+![image](https://github.com/user-attachments/assets/db8ce50b-eae8-4516-866a-d9029ebc99d5)
+
+![image](https://github.com/user-attachments/assets/40a5c2a8-5836-4a9f-886e-8f42c02852cc)
+
+If it shows, then congrats.
+
+![image](https://github.com/user-attachments/assets/c7aa1b9d-37ed-4ced-83f6-66066432c8a6)
+
 
 # Deploying to Elastic Beanstalk
 https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-django.html
