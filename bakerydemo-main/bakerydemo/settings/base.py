@@ -138,17 +138,14 @@ if "DATABASE_URL" in os.environ:
     DATABASES = {"default": dj_database_url.config(conn_max_age=500)}
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME':     env('RDS_DB_NAME'),
-            'USER':     env('RDS_USERNAME'),
-            'PASSWORD': env('RDS_PASSWORD'),
-            'HOST':     env('RDS_HOSTNAME'),
-            'PORT':     env('RDS_PORT', default='5432'),
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "bakerydemodb"),
         }
     }
 
-
+# Force the correct Ollama API URL
+OLLAMA_API_URL = "http://ec2-3-106-117-22.ap-southeast-2.compute.amazonaws.com:11434/api/generate"
 
 # Password validation
 # https://docs.djangoproject.com/en/stable/ref/settings/#auth-password-validators
@@ -239,6 +236,43 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 WAGTAILIMAGES_AVIF_QUALITY = 60
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme")
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'bakerydemo': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # Content Security policy settings
 # http://django-csp.readthedocs.io/en/latest/configuration.html
