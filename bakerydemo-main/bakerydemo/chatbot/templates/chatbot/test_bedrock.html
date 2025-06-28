@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Test AWS Bedrock Embeddings{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">AWS Bedrock Titan Text Embeddings V2 Test</h2>
+                </div>
+                <div class="card-body">
+                    <form id="embeddings-form">
+                        <div class="mb-3">
+                            <label for="text-input" class="form-label">Text to generate embeddings for:</label>
+                            <textarea id="text-input" class="form-control" rows="4" placeholder="Enter text here...">Hello, I want to test AWS Bedrock Titan Text Embeddings V2!</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Generate Embeddings</button>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <h4>Results:</h4>
+                        <div id="loading" class="d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2">Generating embeddings...</span>
+                        </div>
+                        <div id="results" class="mt-3">
+                            <div class="alert alert-info">
+                                Submit the form to generate embeddings.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('embeddings-form');
+    const textInput = document.getElementById('text-input');
+    const loading = document.getElementById('loading');
+    const results = document.getElementById('results');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Show loading indicator
+        loading.classList.remove('d-none');
+        results.innerHTML = '';
+        
+        try {
+            // Make API request
+            const response = await fetch('/api/test-bedrock-embeddings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: textInput.value
+                })
+            });
+            
+            // Parse response
+            const data = await response.json();
+            
+            // Create results HTML
+            let resultsHtml = '';
+            
+            if (data.status === 'success') {
+                resultsHtml = `
+                    <div class="alert alert-success">
+                        <h5>Success!</h5>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Text:</strong> ${data.text}</p>
+                        <p><strong>Embedding Length:</strong> ${data.embedding_length}</p>
+                        <p><strong>Embedding Sample (first 5 values):</strong></p>
+                        <pre>${JSON.stringify(data.embedding_sample, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                resultsHtml = `
+                    <div class="alert alert-danger">
+                        <h5>Error</h5>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Text:</strong> ${data.text || 'N/A'}</p>
+                        ${data.traceback ? `<p><strong>Traceback:</strong></p><pre class="bg-dark text-light p-3">${data.traceback}</pre>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Update results
+            results.innerHTML = resultsHtml;
+            
+        } catch (error) {
+            results.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5>Error</h5>
+                    <p>An unexpected error occurred: ${error.message}</p>
+                </div>
+            `;
+        } finally {
+            // Hide loading indicator
+            loading.classList.add('d-none');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% load navigation_tags static wagtailuserbar %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>
+            {% block title %}
+                {% if page.seo_title %}
+                    {{ page.seo_title }}
+                {% else %}
+                    {{ page.title }}
+                {% endif %}
+            {% endblock %}
+            {% block title_suffix %}
+                | {{ settings.base.SiteSettings.title_suffix }}
+            {% endblock %}
+        </title>
+        <meta name="description" content="{% block search_description %}{% if page.search_description %}{{ page.search_description }}{% endif %}{% endblock %}">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {# Force all links in the live preview panel to be opened in a new tab #}
+        {% if request.in_preview_panel %}
+            <base target="_blank">
+        {% endif %}
+
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/font-marcellus.css' %}">
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </head>
+
+    <body class="{% block body_class %}template-{{ self.get_verbose_name|slugify }}{% endblock %}">
+        {% wagtailuserbar %}
+
+        {% block header %}
+            {% include "includes/header.html" %}
+        {% endblock header %}
+
+        {% block breadcrumbs %}
+            {# breadcrumbs is defined in base/templatetags/navigation_tags.py #}
+            {% breadcrumbs %}
+        {% endblock breadcrumbs %}
+
+
+        <main id="main-content">
+            {% block messages %}
+                {% include "includes/messages.html" %}
+            {% endblock messages %}
+
+            {% block content %}
+            {% endblock content %}
+        </main>
+
+        <hr>
+
+        {% include "includes/footer.html" %}
+
+        <!-- Chat Icon -->
+        <div class="chat-icon-container">
+            <div class="chat-icon" id="chatIcon">
+                <i class="fas fa-comment"></i>
+            </div>
+        </div>
+
+        <!-- Chat Window -->
+        <div class="chat-window" id="chatWindow">
+            <div class="chat-header">
+                <h3>Ask DeepSeek</h3>
+                <button class="close-chat" id="closeChat">&times;</button>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message here...">
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
+
+        <script type="module" src="{% static 'js/main.js' %}"></script>
+        <script src="{% static 'js/chatbot.js' %}"></script>
+    </body>
+</html>

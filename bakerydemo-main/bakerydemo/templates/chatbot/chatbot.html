@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .chat-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .chat-messages {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #f9f9f9;
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 10px 15px;
+      border-radius: 5px;
+      max-width: 80%;
+    }
+    .user-message {
+      background-color: #d1ecf1;
+      margin-left: auto;
+      text-align: right;
+    }
+    .ai-message {
+      background-color: #e2e3e5;
+    }
+    .message-content {
+      white-space: pre-wrap;
+    }
+    .message-meta {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-top: 5px;
+    }
+    .settings-panel {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container chat-container">
+    <h1 class="mb-4 text-center">Ask DeepSeek</h1>
+    
+    <div class="settings-panel">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="useBedrockEmbeddings" checked>
+            <label class="form-check-label" for="useBedrockEmbeddings">Use Bedrock Embeddings</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <p class="mb-0 text-muted">
+            <small>Using AWS Bedrock Titan Text Embeddings V2 for vector embeddings</small>
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chat-messages" id="chatMessages"></div>
+    
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" id="userInput" placeholder="Type your message here...">
+      <button class="btn btn-primary" type="button" id="sendButton">Send</button>
+    </div>
+    
+    <div class="alert alert-info d-none" id="statusMessage"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const chatMessages = document.getElementById('chatMessages');
+      const userInput = document.getElementById('userInput');
+      const sendButton = document.getElementById('sendButton');
+      const useBedrockEmbeddings = document.getElementById('useBedrockEmbeddings');
+      const statusMessage = document.getElementById('statusMessage');
+      
+      // Add event listener for the send button
+      sendButton.addEventListener('click', sendMessage);
+      
+      // Add event listener for the Enter key
+      userInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+      
+      async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to the chat
+        addMessage(message, 'user');
+        
+        // Clear the input field
+        userInput.value = '';
+        
+        // Show loading indicator
+        const loadingMessage = addMessage('Thinking...', 'ai', true);
+        
+        try {
+          // Prepare the request payload
+          const payload = {
+            message: message,
+            use_bedrock_embeddings: useBedrockEmbeddings.checked
+          };
+          
+          // Send the request to the API
+          const response = await fetch('/api/chatbot/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          
+          // Parse the response
+          const data = await response.json();
+          
+          // Remove the loading message
+          if (loadingMessage) {
+            chatMessages.removeChild(loadingMessage);
+          }
+          
+          if (data.error) {
+            // Show error message
+            addMessage(`Error: ${data.error}`, 'ai');
+            showStatus('error', `Error: ${data.error}`);
+          } else {
+            // Add AI response to the chat
+            const embeddingsInfo = data.embeddings_generated ? 
+              `Embeddings: Yes (${data.embeddings_length || 'unknown'} dimensions)` : 
+              'Embeddings: No';
+            
+            addMessage(data.response, 'ai', false, embeddingsInfo);
+          }
+        } catch (error) {
+          // Remove the loading message
+          if (loadingMessage) {
+            chatMessages.removeChild(loadingMessage);
+          }
+          
+          // Show error message
+          addMessage(`Error: ${error.message}`, 'ai');
+          showStatus('error', `Error: ${error.message}`);
+        }
+      }
+      
+      function addMessage(content, sender, isLoading = false, meta = '') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'ai-message'}`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = content;
+        messageDiv.appendChild(contentDiv);
+        
+        if (meta) {
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'message-meta';
+          metaDiv.textContent = meta;
+          messageDiv.appendChild(metaDiv);
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to the bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return isLoading ? messageDiv : null;
+      }
+      
+      function showStatus(type, message) {
+        statusMessage.textContent = message;
+        statusMessage.className = `alert alert-${type === 'error' ? 'danger' : 'info'}`;
+        statusMessage.classList.remove('d-none');
+        
+        // Hide the status message after 5 seconds
+        setTimeout(() => {
+          statusMessage.classList.add('d-none');
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
